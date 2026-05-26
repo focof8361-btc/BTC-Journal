@@ -34,6 +34,20 @@
         #pwa-banner.show { display:flex; }
         @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
         .pwa-pill { display:inline-flex; align-items:center; gap:3px; font-size:9px; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:1px 6px; }
+        /* Trade Journal */
+        .trade-win  { border-left: 3px solid #10b981; }
+        .trade-loss { border-left: 3px solid #ef4444; }
+        .trade-be   { border-left: 3px solid #f59e0b; }
+        .journal-card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+        .stat-box { background: rgba(255,255,255,0.03); border:1px solid #27272a; border-radius:10px; padding:10px 12px; }
+        /* Bottom nav */
+        #bottom-nav { position:fixed; bottom:0; left:0; right:0; background:#0a0a0b; border-top:1px solid #27272a; display:flex; z-index:800; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 4px 6px; font-size:9px; font-weight:700; color:#71717a; border:none; background:transparent; cursor:pointer; gap:2px; }
+        .nav-btn.active { color:#38bdf8; }
+        .nav-btn svg { width:18px; height:18px; }
+        .page { display:none; }
+        .page.active { display:block; }
+        body { padding-bottom: calc(56px + env(safe-area-inset-bottom)) !important; }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 antialiased">
@@ -41,7 +55,8 @@
 <!-- Offline Bar -->
 <div id="offline-bar">📵 Mode Offline — Data cache ditampilkan</div>
 
-    <div class="max-w-md mx-auto min-h-screen flex flex-col pb-12">
+    <div id="page-home" class="page active">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-12">
         <header class="pt-6 pb-4 border-b border-zinc-900 px-4 flex justify-between items-center bg-zinc-950/90 backdrop-blur sticky top-0 z-50">
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-sky-400">⚡ BTC Futures Journal Pro</h1>
@@ -124,14 +139,20 @@
                 </div>
                 <div id="confidence-note" class="text-[9px] text-zinc-500 mt-1 italic">Atur confidence level secara manual</div>
             </div>
-            <button onclick="saveActiveLevels()" class="w-full mt-3 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-2 rounded-lg text-xs uppercase">💾 Simpan Level Trading & Risk</button>
+            <div class="flex gap-2 mt-3">
+                <button onclick="saveActiveLevels()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-2 rounded-lg text-xs uppercase">💾 Simpan</button>
+                <button onclick="openCloseTradeModal()" class="flex-1 bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white font-black py-2 rounded-lg text-xs uppercase flex items-center justify-center gap-1">🏁 Tutup Trade</button>
+            </div>
         </div>
 
         <!-- NEW: REAL-TIME POSITION MONITORING -->
         <div class="mx-4 mb-4 bg-gradient-to-r from-indigo-950/30 to-purple-950/30 border border-indigo-500/30 rounded-xl p-4 shadow-lg">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="text-indigo-400 text-sm">📡</span>
-                <h3 class="text-xs font-bold text-indigo-400 uppercase">REAL-TIME POSITION MONITORING</h3>
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-indigo-400 text-sm">📡</span>
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase">REAL-TIME POSITION MONITORING</h3>
+                </div>
+                <button onclick="openCloseTradeModal()" class="text-[9px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 px-2 py-1 rounded-lg font-bold">🏁 Tutup</button>
             </div>
             <div id="position-monitoring-content" class="space-y-2 text-xs">
                 <p class="text-zinc-400">Belum ada harga Bitcoin. Klik "Update Harga" atau input manual.</p>
@@ -152,6 +173,55 @@
         <div class="flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar border-b border-zinc-900/50" id="tab-container"></div>
         <div class="flex-1 px-4 space-y-3 pb-6" id="log-stream"></div>
     </div>
+
+</div><!-- end page-home -->
+
+<!-- ═══════════════ PAGE: TRADE JOURNAL ═══════════════ -->
+<div id="page-journal" class="page">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-4 px-4 pt-4">
+
+  <!-- Journal Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-base font-black text-emerald-400">📒 Trade Journal</h2>
+      <p class="text-[10px] text-zinc-500">Semua trade tersimpan & PnL Terealisasi</p>
+    </div>
+    <button onclick="openCloseTradeModal()" class="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-black px-3 py-2 rounded-xl">+ Tutup Trade</button>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="grid grid-cols-2 gap-2 mb-4">
+    <div class="stat-box">
+      <p class="text-[9px] text-zinc-500 uppercase font-bold">Total PnL</p>
+      <p class="text-lg font-extrabold" id="j-total-pnl">$0.00</p>
+    </div>
+    <div class="stat-box">
+      <p class="text-[9px] text-zinc-500 uppercase font-bold">Win Rate</p>
+      <p class="text-lg font-extrabold text-sky-400" id="j-winrate">0%</p>
+    </div>
+    <div class="stat-box">
+      <p class="text-[9px] text-zinc-500 uppercase font-bold">Total Trade</p>
+      <p class="text-base font-extrabold text-zinc-200" id="j-total-trades">0</p>
+    </div>
+    <div class="stat-box">
+      <p class="text-[9px] text-zinc-500 uppercase font-bold">Avg PnL/Trade</p>
+      <p class="text-base font-extrabold" id="j-avg-pnl">$0.00</p>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="flex gap-2 mb-3 overflow-x-auto no-scrollbar">
+    <button onclick="setJournalFilter('all')" id="jf-all" class="jf-btn jf-active whitespace-nowrap text-[10px] font-bold px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30">Semua</button>
+    <button onclick="setJournalFilter('win')" id="jf-win" class="jf-btn whitespace-nowrap text-[10px] font-bold px-3 py-1.5 rounded-lg bg-zinc-800/60 text-zinc-400 border border-zinc-700">✅ Win</button>
+    <button onclick="setJournalFilter('loss')" id="jf-loss" class="jf-btn whitespace-nowrap text-[10px] font-bold px-3 py-1.5 rounded-lg bg-zinc-800/60 text-zinc-400 border border-zinc-700">❌ Loss</button>
+    <button onclick="setJournalFilter('be')" id="jf-be" class="jf-btn whitespace-nowrap text-[10px] font-bold px-3 py-1.5 rounded-lg bg-zinc-800/60 text-zinc-400 border border-zinc-700">⚖️ BE</button>
+  </div>
+
+  <!-- Journal list -->
+  <div id="journal-list"></div>
+
+</div>
+</div><!-- end page-journal -->
 
     <!-- Modal (ringkas) -->
     <div id="channel-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50"><div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-xs"><h3 class="text-xs font-bold text-zinc-400 mb-3">Tambah Tab</h3><input type="text" id="new-channel-name" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs"><div class="flex gap-2 mt-4"><button onclick="closeChannelModal()" class="flex-1 bg-zinc-800 text-zinc-400 py-2 rounded-xl">Batal</button><button onclick="submitNewChannel()" class="flex-1 bg-sky-500 text-zinc-950 font-black py-2 rounded-xl">Simpan</button></div></div></div>
@@ -379,9 +449,9 @@
         function submitNewChannel(){ let name=document.getElementById('new-channel-name').value.trim(); if(!name) return; let id=name.toLowerCase().replace(/\s+/g,'-'); if(channels.some(c=>c.id===id)){ alert("Sudah ada"); return; } channels.push({id,name}); activeCh=id; saveData(); renderApp(); closeChannelModal(); }
         function openImportExportModal(){ document.getElementById('import-export-modal').style.display='flex'; }
         function closeImportExportModal(){ document.getElementById('import-export-modal').style.display='none'; }
-        function exportAllData(){ const full={channels, logs, activeLevels, btcPriceData, version:'v7.3'}; const blob=new Blob([JSON.stringify(full,null,2)],{type:'application/json'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`btc_backup_${new Date().toISOString().slice(0,19)}.json`; link.click(); URL.revokeObjectURL(link.href); alert("Export sukses"); }
-        function importDataFromFile(event){ const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try{ const imp=JSON.parse(e.target.result); if(imp.channels) channels=imp.channels; if(imp.logs) logs=imp.logs; if(imp.activeLevels) activeLevels=imp.activeLevels; if(imp.btcPriceData) { btcPriceData=imp.btcPriceData; localStorage.setItem('btc_price_data',JSON.stringify(btcPriceData)); updatePriceDisplayOnUI(btcPriceData.price, btcPriceData.source, btcPriceData.timestamp); if(btcPriceData.price) updatePositionMonitoring(btcPriceData.price); } saveData(); renderApp(); loadActiveLevelsToForm(); alert("Import sukses"); }catch(err){ alert("File invalid"); } }; reader.readAsText(file); event.target.value=''; }
-        function resetAllData(){ if(confirm("Reset semua data?")){ localStorage.clear(); channels=[{id:'crypto-world',name:'Crypto World'},{id:'bitcoin-hyper',name:'Bitcoin Hyper'}]; logs=[]; activeLevels={entry:'',sl:'',tp:'',rr:'',tradeValue:1000,leverage:10,confidence:0,source:'manual'}; btcPriceData={price:null,timestamp:null,source:'none'}; activeCh='bitcoin-hyper'; saveData(); renderApp(); loadActiveLevelsToForm(); localStorage.setItem('btc_price_data',JSON.stringify(btcPriceData)); updatePriceDisplayOnUI(null,'none'); updatePositionMonitoring(null); alert("Reset selesai"); closeImportExportModal(); } }
+        function exportAllData(){ const full={channels, logs, activeLevels, btcPriceData, tradeJournal, version:'v7.4-pwa'}; const blob=new Blob([JSON.stringify(full,null,2)],{type:'application/json'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`btc_backup_${new Date().toISOString().slice(0,19)}.json`; link.click(); URL.revokeObjectURL(link.href); alert(`Export sukses! ${logs.length} analisis + ${tradeJournal.length} trade journal`); }
+        function importDataFromFile(event){ const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try{ const imp=JSON.parse(e.target.result); if(imp.channels) channels=imp.channels; if(imp.logs) logs=imp.logs; if(imp.activeLevels) activeLevels=imp.activeLevels; if(imp.tradeJournal){ tradeJournal=imp.tradeJournal; localStorage.setItem('btc_trade_journal_v1',JSON.stringify(tradeJournal)); } if(imp.btcPriceData){ btcPriceData=imp.btcPriceData; localStorage.setItem('btc_price_data',JSON.stringify(btcPriceData)); updatePriceDisplayOnUI(btcPriceData.price, btcPriceData.source, btcPriceData.timestamp); if(btcPriceData.price) updatePositionMonitoring(btcPriceData.price); } saveData(); renderApp(); loadActiveLevelsToForm(); renderJournal(); updateJournalStats(); alert("Import sukses! " + logs.length + " analisis + " + tradeJournal.length + " trade journal"); }catch(err){ alert("File invalid"); } }; reader.readAsText(file); event.target.value=''; }
+        function resetAllData(){ if(confirm("Reset semua data?")){ localStorage.clear(); channels=[{id:'crypto-world',name:'Crypto World'},{id:'bitcoin-hyper',name:'Bitcoin Hyper'}]; logs=[]; tradeJournal=[]; localStorage.removeItem('btc_trade_journal_v1'); activeLevels={entry:'',sl:'',tp:'',rr:'',tradeValue:1000,leverage:10,confidence:0,source:'manual'}; btcPriceData={price:null,timestamp:null,source:'none'}; activeCh='bitcoin-hyper'; saveData(); renderApp(); loadActiveLevelsToForm(); localStorage.setItem('btc_price_data',JSON.stringify(btcPriceData)); updatePriceDisplayOnUI(null,'none'); updatePositionMonitoring(null); alert("Reset selesai"); closeImportExportModal(); } }
         function analyzeConfluence(){ applyConfluenceLevels(); }
 
         window.onload = () => {
@@ -406,6 +476,248 @@
             document.getElementById('trade-value').oninput = () => { calculateRiskManagement(); if(btcPriceData.price) updatePositionMonitoring(btcPriceData.price); };
             document.getElementById('leverage').oninput = () => { calculateRiskManagement(); if(btcPriceData.price) updatePositionMonitoring(btcPriceData.price); };
         };
+
+        // ==================== TRADE JOURNAL DATA ====================
+        let tradeJournal = JSON.parse(localStorage.getItem('btc_trade_journal_v1')) || [];
+        let journalFilter = 'all';
+
+        function saveJournal() {
+            localStorage.setItem('btc_trade_journal_v1', JSON.stringify(tradeJournal));
+            renderJournal();
+            updateJournalStats();
+        }
+
+        // ── Page Navigation ──────────────────────────────────────────────────
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.getElementById('nav-' + page).classList.add('active');
+            if (page === 'journal') { renderJournal(); updateJournalStats(); }
+        }
+
+        // ── Close Trade Modal ─────────────────────────────────────────────────
+        function openCloseTradeModal() {
+            // Pre-fill from active levels
+            const e = activeLevels.entry, sl = activeLevels.sl, tp = activeLevels.tp;
+            const lev = activeLevels.leverage || 10, margin = activeLevels.tradeValue || 1000;
+            document.getElementById('ct-entry-display').textContent = e ? '$' + parseFloat(e).toLocaleString() : '-';
+            document.getElementById('ct-sl-display').textContent   = sl ? '$' + parseFloat(sl).toLocaleString() : '-';
+            document.getElementById('ct-tp-display').textContent   = tp ? '$' + parseFloat(tp).toLocaleString() : '-';
+            document.getElementById('ct-lev-display').textContent  = lev + 'x';
+            document.getElementById('ct-margin-display').textContent = '$' + margin.toLocaleString();
+            const isLong = parseFloat(e) > parseFloat(sl);
+            document.getElementById('ct-dir-display').textContent = isLong ? 'LONG' : 'SHORT';
+            document.getElementById('ct-exit-price').value = '';
+            document.getElementById('ct-exit-reason').value = '';
+            document.getElementById('ct-notes').value = '';
+            document.getElementById('ct-emotion').value = '';
+            document.getElementById('ct-pnl-preview').classList.add('hidden');
+            document.querySelectorAll('input[name="ct-outcome"]').forEach(r => r.checked = false);
+            document.querySelectorAll('.emotion-btn').forEach(b => b.classList.remove('bg-sky-500/30','text-sky-300','border-sky-500/50'));
+            document.querySelectorAll('.exit-reason-btn').forEach(b => b.classList.remove('bg-sky-500/30','text-sky-300','border-sky-500/50'));
+            document.getElementById('close-trade-modal').style.display = 'flex';
+        }
+
+        function closeCloseTradeModal() {
+            document.getElementById('close-trade-modal').style.display = 'none';
+        }
+
+        function setExitReason(reason) {
+            document.getElementById('ct-exit-reason').value = reason;
+            document.querySelectorAll('.exit-reason-btn').forEach(b => {
+                b.classList.remove('bg-sky-500/30','text-sky-300','border-sky-500/50');
+                if (b.textContent.trim().includes(reason.split(' ')[0]) || b.textContent.includes(reason)) {
+                    b.classList.add('bg-sky-500/30','text-sky-300','border-sky-500/50');
+                }
+            });
+        }
+
+        function setEmotion(emo) {
+            document.getElementById('ct-emotion').value = emo;
+            document.querySelectorAll('.emotion-btn').forEach(b => {
+                b.classList.remove('bg-sky-500/30','text-sky-300','border-sky-500/50');
+                if (b.textContent.trim() === emo) b.classList.add('bg-sky-500/30','text-sky-300','border-sky-500/50');
+            });
+        }
+
+        function calcCloseTrade() {
+            const entry   = parseFloat(activeLevels.entry);
+            const sl      = parseFloat(activeLevels.sl);
+            const exitP   = parseFloat(document.getElementById('ct-exit-price').value);
+            const margin  = parseFloat(activeLevels.tradeValue) || 1000;
+            const lev     = parseFloat(activeLevels.leverage)   || 10;
+            if (isNaN(entry) || isNaN(exitP) || isNaN(sl)) return;
+
+            const posSize  = margin * lev;
+            const isLong   = entry > sl;
+            const pnlPct   = isLong ? ((exitP - entry) / entry) * 100 : ((entry - exitP) / entry) * 100;
+            const pnlDollar = posSize * (pnlPct / 100);
+            const roe       = (pnlDollar / margin) * 100;
+            const resultAuto = pnlDollar > 0.5 ? 'win' : pnlDollar < -0.5 ? 'loss' : 'be';
+
+            const col = pnlDollar >= 0 ? 'text-emerald-400' : 'text-red-400';
+            document.getElementById('ct-pnl-dollar').className  = 'font-bold font-mono ' + col;
+            document.getElementById('ct-pnl-percent').className = 'font-bold ' + col;
+            document.getElementById('ct-roe').className         = 'font-bold ' + col;
+            document.getElementById('ct-pnl-dollar').textContent  = (pnlDollar >= 0 ? '+' : '') + '$' + pnlDollar.toFixed(2);
+            document.getElementById('ct-pnl-percent').textContent = (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
+            document.getElementById('ct-roe').textContent         = (roe >= 0 ? '+' : '') + roe.toFixed(2) + '%';
+            const badge = { win: '✅ WIN', loss: '❌ LOSS', be: '⚖️ BE' };
+            const bCol  = { win: 'text-emerald-400', loss: 'text-red-400', be: 'text-amber-400' };
+            document.getElementById('ct-result-badge').textContent = badge[resultAuto];
+            document.getElementById('ct-result-badge').className   = 'font-bold ' + bCol[resultAuto];
+
+            // Auto-select outcome radio
+            const radio = document.querySelector(`input[name="ct-outcome"][value="${resultAuto}"]`);
+            if (radio) radio.checked = true;
+
+            document.getElementById('ct-pnl-preview').classList.remove('hidden');
+        }
+
+        function submitCloseTrade() {
+            const entry   = parseFloat(activeLevels.entry);
+            const sl      = parseFloat(activeLevels.sl);
+            const tp      = parseFloat(activeLevels.tp);
+            const exitP   = parseFloat(document.getElementById('ct-exit-price').value);
+            const margin  = parseFloat(activeLevels.tradeValue) || 1000;
+            const lev     = parseFloat(activeLevels.leverage)   || 10;
+            const outcome = document.querySelector('input[name="ct-outcome"]:checked');
+            const reason  = document.getElementById('ct-exit-reason').value.trim();
+            const notes   = document.getElementById('ct-notes').value.trim();
+            const emotion = document.getElementById('ct-emotion').value;
+
+            if (isNaN(exitP) || exitP <= 0) { alert('Masukkan harga exit yang valid!'); return; }
+            if (!outcome) { alert('Pilih hasil trade (Win/Loss/BE)!'); return; }
+            if (!entry || isNaN(entry)) { alert('Active Level Trading belum diisi entry price!'); return; }
+
+            const isLong    = entry > sl;
+            const posSize   = margin * lev;
+            const pnlPct    = isLong ? ((exitP - entry) / entry) * 100 : ((entry - exitP) / entry) * 100;
+            const pnlDollar = posSize * (pnlPct / 100);
+            const roe       = (pnlDollar / margin) * 100;
+            const rr        = activeLevels.rr || '-';
+            const now       = new Date();
+
+            const record = {
+                id: Date.now(),
+                date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                direction: isLong ? 'LONG' : 'SHORT',
+                entry, sl, tp: tp || null, exitPrice: exitP,
+                margin, leverage: lev, positionSize: posSize,
+                pnlDollar: parseFloat(pnlDollar.toFixed(2)),
+                pnlPercent: parseFloat(pnlPct.toFixed(2)),
+                roe: parseFloat(roe.toFixed(2)),
+                rr, outcome: outcome.value,
+                exitReason: reason || '-',
+                notes: notes || '',
+                emotion: emotion || '-',
+                confidence: activeLevels.confidence || 0,
+            };
+
+            tradeJournal.unshift(record);
+            saveJournal();
+            closeCloseTradeModal();
+            switchPage('journal');
+            alert(`Trade direkam! PnL: ${pnlDollar >= 0 ? '+' : ''}$${pnlDollar.toFixed(2)}`);
+        }
+
+        // ── Journal Render ───────────────────────────────────────────────────
+        function setJournalFilter(f) {
+            journalFilter = f;
+            document.querySelectorAll('.jf-btn').forEach(b => {
+                b.classList.remove('bg-sky-500/20','text-sky-400','border-sky-500/30');
+                b.classList.add('bg-zinc-800/60','text-zinc-400','border-zinc-700');
+            });
+            const active = document.getElementById('jf-' + f);
+            if (active) {
+                active.classList.remove('bg-zinc-800/60','text-zinc-400','border-zinc-700');
+                active.classList.add('bg-sky-500/20','text-sky-400','border-sky-500/30');
+            }
+            renderJournal();
+        }
+
+        function updateJournalStats() {
+            const total = tradeJournal.length;
+            const wins  = tradeJournal.filter(t => t.outcome === 'win').length;
+            const totalPnl = tradeJournal.reduce((s, t) => s + t.pnlDollar, 0);
+            const avgPnl   = total ? totalPnl / total : 0;
+            const wr = total ? (wins / total * 100) : 0;
+
+            const pnlEl = document.getElementById('j-total-pnl');
+            if (pnlEl) {
+                pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(2);
+                pnlEl.className = 'text-lg font-extrabold ' + (totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400');
+            }
+            const wrEl = document.getElementById('j-winrate');
+            if (wrEl) wrEl.textContent = wr.toFixed(1) + '%';
+            const ttEl = document.getElementById('j-total-trades');
+            if (ttEl) ttEl.textContent = total;
+            const avgEl = document.getElementById('j-avg-pnl');
+            if (avgEl) {
+                avgEl.textContent = (avgPnl >= 0 ? '+' : '') + '$' + avgPnl.toFixed(2);
+                avgEl.className = 'text-base font-extrabold ' + (avgPnl >= 0 ? 'text-emerald-400' : 'text-red-400');
+            }
+        }
+
+        function renderJournal() {
+            const list = document.getElementById('journal-list');
+            if (!list) return;
+            let data = journalFilter === 'all' ? tradeJournal : tradeJournal.filter(t => t.outcome === journalFilter);
+            if (data.length === 0) {
+                list.innerHTML = '<div class="text-center py-16 text-zinc-600 border border-dashed border-zinc-800 rounded-2xl"><p class="text-xs">Belum ada trade direkam</p><p class="text-[10px] mt-1">Klik "+ Tutup Trade" untuk rekam</p></div>';
+                return;
+            }
+            const outcomeStyle = { win: ['trade-win','text-emerald-400','✅ WIN'], loss: ['trade-loss','text-red-400','❌ LOSS'], be: ['trade-be','text-amber-400','⚖️ BE'] };
+            list.innerHTML = data.map(t => {
+                const [borderCls, pnlCls, badge] = outcomeStyle[t.outcome] || outcomeStyle.be;
+                const pnlSign = t.pnlDollar >= 0 ? '+' : '';
+                const dirCol  = t.direction === 'LONG' ? 'text-emerald-400' : 'text-red-400';
+                const jid = 'jcard-' + t.id;
+                return `<div class="journal-card ${borderCls} mb-3">
+                  <div class="flex justify-between items-start cursor-pointer" onclick="toggleCollapse('${jid}')">
+                    <div>
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[10px] font-black ${dirCol}">${t.direction}</span>
+                        <span class="text-[10px] font-bold ${pnlCls}">${badge}</span>
+                        <span class="text-[10px] font-mono font-bold ${t.pnlDollar >= 0 ? 'text-emerald-400' : 'text-red-400'}">${pnlSign}$${t.pnlDollar.toFixed(2)}</span>
+                      </div>
+                      <p class="text-[9px] text-zinc-500">${t.date} ${t.time} · ${t.exitReason}</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <button onclick="event.stopPropagation();deleteJournalEntry(${t.id})" class="text-red-500/60 hover:text-red-400 text-xs px-1">🗑️</button>
+                      <svg class="w-3.5 h-3.5 text-zinc-600 rotate-transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                  </div>
+                  <div id="${jid}" class="collapsible-content">
+                    <div class="mt-3 pt-3 border-t border-zinc-800 grid grid-cols-2 gap-y-1.5 gap-x-3 text-[10px]">
+                      <div><span class="text-zinc-500">Entry:</span> <span class="font-mono text-emerald-300">$${t.entry.toLocaleString()}</span></div>
+                      <div><span class="text-zinc-500">Exit:</span> <span class="font-mono text-white">$${t.exitPrice.toLocaleString()}</span></div>
+                      <div><span class="text-zinc-500">SL:</span> <span class="font-mono text-red-300">$${t.sl.toLocaleString()}</span></div>
+                      <div><span class="text-zinc-500">TP:</span> <span class="font-mono text-amber-300">${t.tp ? '$'+t.tp.toLocaleString() : '-'}</span></div>
+                      <div><span class="text-zinc-500">Leverage:</span> <span class="font-mono text-purple-300">${t.leverage}x</span></div>
+                      <div><span class="text-zinc-500">Margin:</span> <span class="font-mono text-sky-300">$${t.margin.toLocaleString()}</span></div>
+                      <div><span class="text-zinc-500">PnL %:</span> <span class="${t.pnlDollar>=0?'text-emerald-400':'text-red-400'} font-bold">${t.pnlDollar>=0?'+':''}${t.pnlPercent.toFixed(2)}%</span></div>
+                      <div><span class="text-zinc-500">ROE:</span> <span class="${t.roe>=0?'text-emerald-400':'text-red-400'} font-bold">${t.roe>=0?'+':''}${t.roe.toFixed(2)}%</span></div>
+                      <div><span class="text-zinc-500">R/R:</span> <span class="text-amber-300">${t.rr}</span></div>
+                      <div><span class="text-zinc-500">Emosi:</span> <span class="text-zinc-200">${t.emotion}</span></div>
+                      ${t.notes ? `<div class="col-span-2 mt-1"><span class="text-zinc-500">📓 Catatan:</span> <span class="text-zinc-300">${t.notes}</span></div>` : ''}
+                    </div>
+                  </div>
+                </div>`;
+            }).join('');
+        }
+
+        function deleteJournalEntry(id) {
+            if (confirm('Hapus catatan trade ini?')) {
+                tradeJournal = tradeJournal.filter(t => t.id !== id);
+                saveJournal();
+            }
+        }
+
+        // ── Patch exportAllData to include journal ───────────────────────────
+        const _origExport = exportAllData;
 
         // ==================== PWA: SERVICE WORKER ====================
         if ('serviceWorker' in navigator) {
@@ -457,6 +769,114 @@
         window.addEventListener('offline', checkOnline);
         checkOnline();
     </script>
+
+<!-- Bottom Navigation -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="switchPage('home')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" id="nav-journal" onclick="switchPage('journal')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    Journal
+  </button>
+</nav>
+
+<!-- Close Trade Modal -->
+<div id="close-trade-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <h3 class="text-sm font-black text-emerald-400 mb-1">📝 Tutup & Rekam Trade</h3>
+    <p class="text-[10px] text-zinc-500 mb-4">PnL terealisasi akan dihitung dan disimpan ke journal</p>
+
+    <div class="space-y-3">
+      <!-- Auto-filled info -->
+      <div class="bg-zinc-950 rounded-xl p-3 text-[10px] space-y-1 border border-zinc-800">
+        <p class="text-zinc-500 font-bold uppercase mb-1">Data dari Active Level</p>
+        <div class="grid grid-cols-2 gap-1">
+          <div><span class="text-zinc-600">Entry:</span> <span class="text-emerald-400 font-mono" id="ct-entry-display">-</span></div>
+          <div><span class="text-zinc-600">SL:</span> <span class="text-red-400 font-mono" id="ct-sl-display">-</span></div>
+          <div><span class="text-zinc-600">TP:</span> <span class="text-amber-400 font-mono" id="ct-tp-display">-</span></div>
+          <div><span class="text-zinc-600">Leverage:</span> <span class="text-purple-400 font-mono" id="ct-lev-display">-</span></div>
+          <div><span class="text-zinc-600">Margin:</span> <span class="text-sky-400 font-mono" id="ct-margin-display">-</span></div>
+          <div><span class="text-zinc-600">Arah:</span> <span class="text-cyan-400 font-mono" id="ct-dir-display">-</span></div>
+        </div>
+      </div>
+
+      <!-- Exit price -->
+      <div>
+        <label class="text-[10px] text-zinc-400 font-bold block mb-1">💱 Harga Exit / Close (USDT) <span class="text-red-400">*</span></label>
+        <input type="number" id="ct-exit-price" placeholder="misal: 77200" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white font-mono text-sm" oninput="calcCloseTrade()">
+      </div>
+
+      <!-- PnL Preview -->
+      <div id="ct-pnl-preview" class="bg-zinc-950 border border-zinc-700 rounded-xl p-3 hidden">
+        <p class="text-[10px] text-zinc-500 font-bold uppercase mb-2">📊 Preview PnL Terealisasi</p>
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div><span class="text-zinc-500">PnL ($):</span> <span id="ct-pnl-dollar" class="font-bold font-mono">-</span></div>
+          <div><span class="text-zinc-500">PnL (%):</span> <span id="ct-pnl-percent" class="font-bold">-</span></div>
+          <div><span class="text-zinc-500">ROE:</span> <span id="ct-roe" class="font-bold">-</span></div>
+          <div><span class="text-zinc-500">Hasil:</span> <span id="ct-result-badge" class="font-bold">-</span></div>
+        </div>
+      </div>
+
+      <!-- Outcome radio -->
+      <div>
+        <label class="text-[10px] text-zinc-400 font-bold block mb-2">🎯 Hasil Trade</label>
+        <div class="flex gap-2">
+          <label class="flex-1 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 cursor-pointer">
+            <input type="radio" name="ct-outcome" value="win" class="accent-emerald-500"> <span class="text-xs text-emerald-400 font-bold">✅ Win</span>
+          </label>
+          <label class="flex-1 flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl p-2 cursor-pointer">
+            <input type="radio" name="ct-outcome" value="loss" class="accent-red-500"> <span class="text-xs text-red-400 font-bold">❌ Loss</span>
+          </label>
+          <label class="flex-1 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2 cursor-pointer">
+            <input type="radio" name="ct-outcome" value="be" class="accent-amber-500"> <span class="text-xs text-amber-400 font-bold">⚖️ BE</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Exit reason -->
+      <div>
+        <label class="text-[10px] text-zinc-400 font-bold block mb-1">🏁 Alasan Keluar</label>
+        <div class="grid grid-cols-3 gap-1 mb-2">
+          <button onclick="setExitReason('TP Hit')" class="exit-reason-btn text-[9px] bg-zinc-800 hover:bg-emerald-500/20 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">🎯 TP Hit</button>
+          <button onclick="setExitReason('SL Hit')" class="exit-reason-btn text-[9px] bg-zinc-800 hover:bg-red-500/20 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">🛑 SL Hit</button>
+          <button onclick="setExitReason('Manual')" class="exit-reason-btn text-[9px] bg-zinc-800 hover:bg-sky-500/20 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">✋ Manual</button>
+          <button onclick="setExitReason('Trailing SL')" class="exit-reason-btn text-[9px] bg-zinc-800 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">📉 Trail SL</button>
+          <button onclick="setExitReason('Partial TP')" class="exit-reason-btn text-[9px] bg-zinc-800 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">⚡ Partial</button>
+          <button onclick="setExitReason('Reversed')" class="exit-reason-btn text-[9px] bg-zinc-800 text-zinc-300 py-1.5 rounded-lg border border-zinc-700">🔄 Reversed</button>
+        </div>
+        <input type="text" id="ct-exit-reason" placeholder="atau ketik sendiri..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2 text-xs text-zinc-200">
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label class="text-[10px] text-zinc-400 font-bold block mb-1">📓 Catatan / Lessons Learned</label>
+        <textarea id="ct-notes" rows="3" placeholder="Apa yang berjalan baik? Apa yang bisa diperbaiki?" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2 text-xs text-zinc-200"></textarea>
+      </div>
+
+      <!-- Emotion -->
+      <div>
+        <label class="text-[10px] text-zinc-400 font-bold block mb-2">🧠 Kondisi Emosi Saat Trade</label>
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="setEmotion('Tenang 😌')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">Tenang 😌</button>
+          <button onclick="setEmotion('Excited 🤩')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">Excited 🤩</button>
+          <button onclick="setEmotion('Takut 😰')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">Takut 😰</button>
+          <button onclick="setEmotion('FOMO 😤')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">FOMO 😤</button>
+          <button onclick="setEmotion('Greedy 🤑')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">Greedy 🤑</button>
+          <button onclick="setEmotion('Discipline ✊')" class="emotion-btn text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg border border-zinc-700">Discipline ✊</button>
+        </div>
+        <input type="hidden" id="ct-emotion" value="">
+      </div>
+
+    </div>
+
+    <div class="flex gap-2 mt-5">
+      <button onclick="closeCloseTradeModal()" class="flex-1 bg-zinc-800 text-zinc-400 py-2.5 rounded-xl text-xs">Batal</button>
+      <button onclick="submitCloseTrade()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-2.5 rounded-xl text-xs">💾 Simpan ke Journal</button>
+    </div>
+  </div>
+</div>
 
 <!-- PWA Install Banner -->
 <div id="pwa-banner">
